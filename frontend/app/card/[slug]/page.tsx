@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchCardBySlug } from '@/store/slices/cardsSlice';
-import { markAsViewed } from '@/services/api/guestApi';
+import { guestApi } from '@/services/api/guestApi';
 import Image from 'next/image';
 
 export default function PublicCardPage() {
@@ -43,7 +43,7 @@ export default function PublicCardPage() {
     if (!guestName.trim() || !currentCard) return;
 
     try {
-      await markAsViewed(currentCard._id, guestName.trim());
+      await guestApi.markAsViewed(currentCard._id, guestName.trim());
       setShowCard(true);
     } catch (error) {
       console.error('Error marking as viewed:', error);

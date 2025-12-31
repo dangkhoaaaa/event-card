@@ -39,7 +39,7 @@ export const fetchCardBySlug = createAsyncThunk(
 
 export const createCard = createAsyncThunk(
   'cards/createCard',
-  async (data: { cardData: CreateCardDto; images?: Record<string, File> | File[] }) => {
+  async (data: { cardData: CreateCardDto; images?: Record<string, File> }) => {
     return await cardApi.create(data.cardData, data.images);
   },
 );

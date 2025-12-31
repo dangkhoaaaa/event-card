@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchCardBySlug } from '@/store/slices/cardsSlice';
-import { markAsViewed } from '@/services/api/guestApi';
+import { guestApi } from '@/services/api/guestApi';
 import Image from 'next/image';
 import { TEMPLATE2_DECORATIVE_IMAGES } from '@/app/templates/template2/constants';
 import { AnimatedText } from '@/app/templates/template2/components/AnimatedText';
@@ -36,7 +36,7 @@ export default function PublicTemplate2Page() {
     if (!guestName.trim() || !currentCard) return;
 
     try {
-      await markAsViewed(currentCard._id, guestName.trim());
+      await guestApi.markAsViewed(currentCard._id, guestName.trim());
       setShowCard(true);
     } catch (error) {
       console.error('Error marking as viewed:', error);
@@ -98,6 +98,16 @@ export default function PublicTemplate2Page() {
     return null;
   };
 
+  const getTextContent = (value: string | { url: string; publicId?: string } | undefined, fallback: string): string => {
+    if (typeof value === 'string') {
+      return value || fallback;
+    }
+    if (value && typeof value === 'object' && 'url' in value) {
+      return value.url;
+    }
+    return fallback;
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Section 1: Red Envelope */}
@@ -115,12 +125,12 @@ export default function PublicTemplate2Page() {
         <div className="max-w-md w-full text-center relative z-10">
           <AnimatedText animationType="fadeIn" delay={0}>
             <h1 className="text-3xl font-serif font-bold text-gray-800 mb-2">
-              {content.invitationTitle || 'THIỆP'}
+              {getTextContent(content.invitationTitle, 'THIỆP')}
             </h1>
           </AnimatedText>
           <AnimatedText animationType="slideUp" delay={200}>
             <p className="text-4xl font-cursive text-gray-800 mb-8">
-              {content.invitationSubtitle || 'Mời Cưới'}
+              {getTextContent(content.invitationSubtitle, 'Mời Cưới')}
             </p>
           </AnimatedText>
           
@@ -188,17 +198,17 @@ export default function PublicTemplate2Page() {
           {/* Names */}
           <AnimatedText animationType="slideLeft" delay={400}>
             <div className="flex items-center justify-center gap-4 mb-6">
-              <p className="text-2xl font-cursive text-gray-800">{content.groomName || 'Anh Từ'}</p>
+              <p className="text-2xl font-cursive text-gray-800">{getTextContent(content.groomName, 'Anh Từ')}</p>
               <span className="text-red-600 text-2xl animate-pulse-slow">❤</span>
-              <p className="text-2xl font-cursive text-gray-800">{content.brideName || 'Diệu Nhi'}</p>
+              <p className="text-2xl font-cursive text-gray-800">{getTextContent(content.brideName, 'Diệu Nhi')}</p>
             </div>
           </AnimatedText>
           
           {/* Date */}
           <AnimatedText animationType="slideRight" delay={600}>
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-800">{content.weddingDate || '31.03'}</p>
-              <p className="text-xl text-gray-700">{content.weddingYear || '2025'}</p>
+              <p className="text-2xl font-bold text-gray-800">{getTextContent(content.weddingDate, '31.03')}</p>
+              <p className="text-xl text-gray-700">{getTextContent(content.weddingYear, '2025')}</p>
             </div>
           </AnimatedText>
           
@@ -250,7 +260,7 @@ export default function PublicTemplate2Page() {
           <div className="p-8 pr-24">
             <AnimatedText animationType="fadeIn" delay={0}>
               <h1 className="text-4xl font-serif font-bold text-gray-800 mb-8 leading-tight">
-                {(content.mainTitle || 'Thư Mời Cưới').split(' ').map((word: string, i: number) => (
+                {(getTextContent(content.mainTitle, 'Thư Mời Cưới')).split(' ').map((word: string, i: number) => (
                   <AnimatedText key={i} animationType="slideUp" delay={i * 100}>
                     <span className="block">{word}</span>
                   </AnimatedText>
@@ -261,36 +271,36 @@ export default function PublicTemplate2Page() {
             {/* Groom's Family */}
             <AnimatedText animationType="slideLeft" delay={200}>
               <div className="mb-6">
-                <h2 className="text-lg font-bold text-gray-800 mb-2">{content.groomFamilyTitle || 'NHÀ TRAI'}</h2>
-                <p className="text-base text-gray-800">{content.groomFamilyName1 || ''}</p>
-                <p className="text-base text-gray-800">{content.groomFamilyName2 || ''}</p>
-                <p className="text-sm text-gray-600 mt-1">{content.groomFamilyAddress || ''}</p>
+                <h2 className="text-lg font-bold text-gray-800 mb-2">{getTextContent(content.groomFamilyTitle, 'NHÀ TRAI')}</h2>
+                <p className="text-base text-gray-800">{getTextContent(content.groomFamilyName1, '')}</p>
+                <p className="text-base text-gray-800">{getTextContent(content.groomFamilyName2, '')}</p>
+                <p className="text-sm text-gray-600 mt-1">{getTextContent(content.groomFamilyAddress, '')}</p>
               </div>
             </AnimatedText>
 
             {/* Bride's Family */}
             <AnimatedText animationType="slideRight" delay={300}>
               <div className="mb-8">
-                <h2 className="text-lg font-bold text-gray-800 mb-2">{content.brideFamilyTitle || 'NHÀ GÁI'}</h2>
-                <p className="text-base text-gray-800">{content.brideFamilyName1 || ''}</p>
-                <p className="text-base text-gray-800">{content.brideFamilyName2 || ''}</p>
-                <p className="text-sm text-gray-600 mt-1">{content.brideFamilyAddress || ''}</p>
+                <h2 className="text-lg font-bold text-gray-800 mb-2">{getTextContent(content.brideFamilyTitle, 'NHÀ GÁI')}</h2>
+                <p className="text-base text-gray-800">{getTextContent(content.brideFamilyName1, '')}</p>
+                <p className="text-base text-gray-800">{getTextContent(content.brideFamilyName2, '')}</p>
+                <p className="text-sm text-gray-600 mt-1">{getTextContent(content.brideFamilyAddress, '')}</p>
               </div>
             </AnimatedText>
 
             {/* Announcement */}
             <AnimatedText animationType="fadeIn" delay={400}>
               <div className="text-center mb-8">
-                <p className="text-base text-gray-700 italic">{content.announcement || 'Trân Trọng Báo Tin Lễ Thành Hôn Của'}</p>
+                <p className="text-base text-gray-700 italic">{getTextContent(content.announcement, 'Trân Trọng Báo Tin Lễ Thành Hôn Của')}</p>
               </div>
             </AnimatedText>
 
             {/* Couple Names */}
             <AnimatedText animationType="scale" delay={400}>
               <div className="text-center mb-8">
-                <p className="text-3xl font-cursive text-gray-800 mb-2">{content.groomNameFull || 'Nguyễn Anh Tú'}</p>
+                <p className="text-3xl font-cursive text-gray-800 mb-2">{getTextContent(content.groomNameFull, 'Nguyễn Anh Tú')}</p>
                 <span className="text-2xl text-red-600 mx-4 animate-fadeInOut">&</span>
-                <p className="text-3xl font-cursive text-gray-800 mt-2">{content.brideNameFull || 'Trần Diệu Nhi'}</p>
+                <p className="text-3xl font-cursive text-gray-800 mt-2">{getTextContent(content.brideNameFull, 'Trần Diệu Nhi')}</p>
               </div>
             </AnimatedText>
           </div>
@@ -375,9 +385,9 @@ export default function PublicTemplate2Page() {
           {/* Names */}
           <AnimatedText animationType="fadeIn" delay={0}>
             <div className="text-center mb-6">
-              <p className="text-3xl font-cursive text-white mb-2">{content.groomNameFull || 'Nguyễn Anh Tú'}</p>
+              <p className="text-3xl font-cursive text-white mb-2">{getTextContent(content.groomNameFull, 'Nguyễn Anh Tú')}</p>
               <span className="text-2xl text-white mx-4 animate-pulse-slow">&</span>
-              <p className="text-3xl font-cursive text-white">{content.brideNameFull || 'Trần Diệu Nhi'}</p>
+              <p className="text-3xl font-cursive text-white">{getTextContent(content.brideNameFull, 'Trần Diệu Nhi')}</p>
             </div>
           </AnimatedText>
 
@@ -405,7 +415,7 @@ export default function PublicTemplate2Page() {
           {/* Invitation Text */}
           <AnimatedText animationType="slideUp" delay={300}>
             <p className="text-2xl font-cursive text-white text-center mb-8">
-              {content.invitationText || 'Trân Trọng Kính Mời'}
+              {getTextContent(content.invitationText, 'Trân Trọng Kính Mời')}
             </p>
           </AnimatedText>
 
@@ -441,22 +451,22 @@ export default function PublicTemplate2Page() {
           {/* Celebration Text */}
           <AnimatedText animationType="fadeIn" delay={500}>
             <p className="text-lg font-cursive text-white text-center mb-8 animate-fadeInOut">
-              {content.celebrationText || 'MỪNG LỄ THÀNH'}
+              {getTextContent(content.celebrationText, 'MỪNG LỄ THÀNH')}
             </p>
           </AnimatedText>
 
           {/* Wedding Date & Time Display */}
           <WeddingDateTime 
-            weddingTime={content.weddingTime || '10 giờ 00'}
-            weddingDate={content.weddingDate || '31.03'}
-            weddingYear={content.weddingYear || '2025'}
-            weddingDay={content.weddingDay}
+            weddingTime={getTextContent(content.weddingTime, '10 giờ 00')}
+            weddingDate={getTextContent(content.weddingDate, '31.03')}
+            weddingYear={getTextContent(content.weddingYear, '2025')}
+                        weddingDay={getTextContent(content.weddingDay, '')}
           />
 
           {/* Calendar */}
           <WeddingCalendar 
-            weddingDate={content.weddingDate || '31.03'} 
-            weddingYear={content.weddingYear || '2025'} 
+            weddingDate={getTextContent(content.weddingDate, '31.03')} 
+            weddingYear={getTextContent(content.weddingYear, '2025')} 
           />
         </div>
       </section>
@@ -537,8 +547,8 @@ export default function PublicTemplate2Page() {
           {/* Thank You Banner */}
           <AnimatedText animationType="scale" delay={0}>
             <div className="bg-pink-500 rounded-lg p-8 mb-4">
-              <p className="text-5xl font-cursive text-white mb-4 animate-fadeInOut">{content.thankYouText || 'thankyou'}</p>
-              <p className="text-xl font-cursive text-white">{content.thankYouMessage || 'Rất hân hạnh, được đón tiếp!'}</p>
+              <p className="text-5xl font-cursive text-white mb-4 animate-fadeInOut">{getTextContent(content.thankYouText, 'thankyou')}</p>
+              <p className="text-xl font-cursive text-white">{getTextContent(content.thankYouMessage, 'Rất hân hạnh, được đón tiếp!')}</p>
             </div>
           </AnimatedText>
         </div>
@@ -549,8 +559,8 @@ export default function PublicTemplate2Page() {
         <div className="max-w-md mx-auto">
           {/* Venue Info */}
           <div className="p-6 bg-white">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">{content.venueName || 'The ADORA Center'}</h2>
-            <p className="text-gray-600 mb-4">{content.venueAddress || ''}</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">{getTextContent(content.venueName, 'The ADORA Center')}</h2>
+            <p className="text-gray-600 mb-4">{getTextContent(content.venueAddress, '')}</p>
             <button className="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold">
               Xem Chỉ Đường
             </button>
@@ -563,7 +573,7 @@ export default function PublicTemplate2Page() {
 
           {/* RSVP Form */}
           <div className="bg-red-800 p-6">
-            <h3 className="text-xl font-bold text-white mb-6">{content.rsvpTitle || 'Xác Nhận Tham Dự & Gửi Lời Chúc'}</h3>
+            <h3 className="text-xl font-bold text-white mb-6">{getTextContent(content.rsvpTitle, 'Xác Nhận Tham Dự & Gửi Lời Chúc')}</h3>
             
             <div className="space-y-4">
               <input
@@ -764,4 +774,3 @@ function WeddingCalendar({ weddingDate, weddingYear }: { weddingDate: string; we
     </div>
   );
 }
-
