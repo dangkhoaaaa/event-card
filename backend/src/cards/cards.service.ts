@@ -81,10 +81,36 @@ export class CardsService {
       .findOne({ slug })
       .populate('templateId')
       .exec();
-    if (!card) {
-      throw new NotFoundException(`Card with slug ${slug} not found`);
+
+    if (card) {
+      return card;
     }
-    return card;
+
+    // Fallback cho 2 thiệp demo slug1 và slug2
+    if (slug === 'slug1' || slug === 'slug2') {
+      const demoId =
+        slug === 'slug1'
+          ? new Types.ObjectId('000000000000000000000001')
+          : new Types.ObjectId('000000000000000000000002');
+
+      // Trả về Card giả lập để FE lấy _id, title, hostName
+      return {
+        _id: demoId,
+        id: demoId.toString(),
+        templateId: new Types.ObjectId(),
+        userId: new Types.ObjectId(),
+        title: slug === 'slug1' ? 'Thiệp cưới 1' : 'Thiệp cưới 2',
+        hostName: slug === 'slug1' ? 'Chủ tiệc thiệp 1' : 'Chủ tiệc thiệp 2',
+        content: {},
+        isPublished: true,
+        viewCount: 0,
+        slug,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as unknown as Card;
+    }
+
+    throw new NotFoundException(`Card with slug ${slug} not found`);
   }
 
   async update(id: string, updateCardDto: UpdateCardDto): Promise<Card> {

@@ -18,9 +18,6 @@ export class GuestsService {
   ) {}
 
   async create(createGuestDto: CreateGuestDto): Promise<Guest> {
-    // Verify card exists
-    await this.cardsService.findOne(createGuestDto.cardId);
-
     // Check if guest with same name already exists for this card
     const existingGuest = await this.guestModel.findOne({
       cardId: new Types.ObjectId(createGuestDto.cardId),
