@@ -7,3 +7,4 @@ export const TEMPLATE2_DECORATIVE_IMAGES = {
   doubleDragon: 'https://res.cloudinary.com/dpxx4z2on/image/upload/v1766921494/double-dragon_agbqdc.png',
 } as const;
 
+

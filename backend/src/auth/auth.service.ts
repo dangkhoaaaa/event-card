@@ -25,6 +25,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
+    console.log('Login attempt with email:', loginDto.email); // Added for debugging
     const user = await this.usersService.findByEmail(loginDto.email);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -50,6 +51,7 @@ export class AuthService {
     return this.usersService.findById(userId);
   }
 }
+
 
 
 
