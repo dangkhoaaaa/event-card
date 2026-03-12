@@ -18,14 +18,23 @@ export class GuestsService {
   ) {}
 
   async create(createGuestDto: CreateGuestDto): Promise<Guest> {
-
-
-    const guest = new this.guestModel({
-      ...createGuestDto,
-      cardId: new Types.ObjectId(createGuestDto.cardId),
-    });
-
-    return guest.save();
+    try {
+      const guest = new this.guestModel({
+        ...createGuestDto,
+        cardId: new Types.ObjectId(createGuestDto.cardId),
+      });
+      return await guest.save();
+    } catch (error: any) {
+      // Nếu có unique index cũ trên (cardId, name) vẫn còn trong DB,
+      // tránh lỗi khi trùng tên bằng cách trả về guest cũ thay vì throw.
+      if (error && error.code === 11000) {
+        return (await this.findByCardAndName(
+          createGuestDto.cardId,
+          createGuestDto.name,
+        )) as Guest;
+      }
+      throw error;
+    }
   }
 
   async createBulk(createBulkGuestsDto: CreateBulkGuestsDto): Promise<Guest[]> {
@@ -42,7 +51,24 @@ export class GuestsService {
       isJoining: createBulkGuestsDto.isJoining,
     }));
 
-    return this.guestModel.insertMany(guestsToCreate);
+    try {
+      return await this.guestModel.insertMany(guestsToCreate, {
+        ordered: false,
+      });
+    } catch (error: any) {
+      // Nếu có lỗi duplicate key, vẫn trả về những bản ghi đã insert thành công
+      if (error && error.writeErrors) {
+        const insertedIds = Object.values(error.insertedDocs || {}).map(
+          (doc: any) => doc._id,
+        );
+        if (insertedIds.length) {
+          return this.guestModel
+            .find({ _id: { $in: insertedIds } })
+            .exec() as any;
+        }
+      }
+      throw error;
+    }
   }
 
   async findAll(cardId: string): Promise<Guest[]> {
