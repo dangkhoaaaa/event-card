@@ -29,11 +29,17 @@ export class Guest {
 
   @Prop()
   message?: string;
+
+  @Prop()
+  wish?: string;
+
+  @Prop({ default: false })
+  isJoining?: boolean;
 }
 
 export const GuestSchema = SchemaFactory.createForClass(Guest);
 GuestSchema.index({ cardId: 1 });
-GuestSchema.index({ cardId: 1, name: 1 }, { unique: true });
+
 
 
 

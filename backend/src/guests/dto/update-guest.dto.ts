@@ -34,6 +34,14 @@ export class UpdateGuestDto {
   @IsOptional()
   @IsString()
   message?: string;
+
+  @IsOptional()
+  @IsString()
+  wish?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isJoining?: boolean;
 }
 
 

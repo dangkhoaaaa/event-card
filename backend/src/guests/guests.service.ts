@@ -18,17 +18,7 @@ export class GuestsService {
   ) {}
 
   async create(createGuestDto: CreateGuestDto): Promise<Guest> {
-    // Check if guest with same name already exists for this card
-    const existingGuest = await this.guestModel.findOne({
-      cardId: new Types.ObjectId(createGuestDto.cardId),
-      name: createGuestDto.name,
-    });
 
-    if (existingGuest) {
-      throw new ConflictException(
-        `Guest with name "${createGuestDto.name}" already exists for this card`,
-      );
-    }
 
     const guest = new this.guestModel({
       ...createGuestDto,
@@ -43,26 +33,16 @@ export class GuestsService {
     await this.cardsService.findOne(createBulkGuestsDto.cardId);
 
     const cardId = new Types.ObjectId(createBulkGuestsDto.cardId);
-    const guests: Guest[] = [];
 
-    for (const name of createBulkGuestsDto.names) {
-      // Check if guest already exists
-      const existingGuest = await this.guestModel.findOne({
-        cardId,
-        name: name.trim(),
-      });
+    const guestsToCreate = createBulkGuestsDto.names.map((name) => ({
+      cardId,
+      name: name.trim(),
+      email: createBulkGuestsDto.email,
+      wish: createBulkGuestsDto.wish,
+      isJoining: createBulkGuestsDto.isJoining,
+    }));
 
-      if (!existingGuest) {
-        const guest = new this.guestModel({
-          cardId,
-          name: name.trim(),
-          email: createBulkGuestsDto.email,
-        });
-        guests.push(await guest.save());
-      }
-    }
-
-    return guests;
+    return this.guestModel.insertMany(guestsToCreate);
   }
 
   async findAll(cardId: string): Promise<Guest[]> {
@@ -141,6 +121,8 @@ export class GuestsService {
     attending: number;
     notAttending: number;
     maybe: number;
+    joining: number;
+    notJoining: number;
   }> {
     const guests = await this.findAll(cardId);
     return {
@@ -150,6 +132,8 @@ export class GuestsService {
       attending: guests.filter((g) => g.response === 'attending').length,
       notAttending: guests.filter((g) => g.response === 'not_attending').length,
       maybe: guests.filter((g) => g.response === 'maybe').length,
+      joining: guests.filter((g) => g.isJoining).length,
+      notJoining: guests.filter((g) => !g.isJoining).length,
     };
   }
 }

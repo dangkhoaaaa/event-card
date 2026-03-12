@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsOptional, IsMongoId, IsArray } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsMongoId, IsArray, IsBoolean } from 'class-validator';
 
 export class CreateGuestDto {
   @IsMongoId()
@@ -10,6 +10,14 @@ export class CreateGuestDto {
   @IsOptional()
   @IsEmail()
   email?: string;
+
+  @IsOptional()
+  @IsString()
+  wish?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isJoining?: boolean;
 }
 
 export class CreateBulkGuestsDto {
@@ -23,6 +31,14 @@ export class CreateBulkGuestsDto {
   @IsOptional()
   @IsEmail()
   email?: string;
+
+  @IsOptional()
+  @IsString()
+  wish?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isJoining?: boolean;
 }
 
 
