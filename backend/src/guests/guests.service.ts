@@ -18,22 +18,30 @@ export class GuestsService {
   ) {}
 
   async create(createGuestDto: CreateGuestDto): Promise<Guest> {
-    try {
-      const guest = new this.guestModel({
-        ...createGuestDto,
-        cardId: new Types.ObjectId(createGuestDto.cardId),
-      });
-      return await guest.save();
-    } catch (error: any) {
-      // Nếu có unique index cũ trên (cardId, name) vẫn còn trong DB,
-      // tránh lỗi khi trùng tên bằng cách trả về guest cũ thay vì throw.
-      if (error && error.code === 11000) {
-        return (await this.findByCardAndName(
-          createGuestDto.cardId,
-          createGuestDto.name,
-        )) as Guest;
+    const baseName = createGuestDto.name.trim();
+    let nameToUse = baseName;
+    let attempt = 0;
+
+    // Nếu trong DB vẫn còn unique index (cardId + name), thêm zero-width space
+    // để tên hiển thị giống nhau nhưng giá trị khác nhau → lưu được nhiều bản ghi trùng tên.
+    // Khi drop index sau này thì cơ chế này vẫn hoạt động bình thường.
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      try {
+        const guest = new this.guestModel({
+          ...createGuestDto,
+          name: nameToUse,
+          cardId: new Types.ObjectId(createGuestDto.cardId),
+        });
+        return await guest.save();
+      } catch (error: any) {
+        if (error && error.code === 11000) {
+          attempt += 1;
+          nameToUse = baseName + '\u200b'.repeat(attempt);
+          continue;
+        }
+        throw error;
       }
-      throw error;
     }
   }
 
@@ -43,32 +51,27 @@ export class GuestsService {
 
     const cardId = new Types.ObjectId(createBulkGuestsDto.cardId);
 
-    const guestsToCreate = createBulkGuestsDto.names.map((name) => ({
-      cardId,
-      name: name.trim(),
-      email: createBulkGuestsDto.email,
-      wish: createBulkGuestsDto.wish,
-      isJoining: createBulkGuestsDto.isJoining,
-    }));
+    const nameCounts: Record<string, number> = {};
 
-    try {
-      return await this.guestModel.insertMany(guestsToCreate, {
-        ordered: false,
-      });
-    } catch (error: any) {
-      // Nếu có lỗi duplicate key, vẫn trả về những bản ghi đã insert thành công
-      if (error && error.writeErrors) {
-        const insertedIds = Object.values(error.insertedDocs || {}).map(
-          (doc: any) => doc._id,
-        );
-        if (insertedIds.length) {
-          return this.guestModel
-            .find({ _id: { $in: insertedIds } })
-            .exec() as any;
-        }
-      }
-      throw error;
-    }
+    const guestsToCreate = createBulkGuestsDto.names.map((rawName) => {
+      const baseName = rawName.trim();
+      const count = (nameCounts[baseName] ?? 0) + 1;
+      nameCounts[baseName] = count;
+      const nameWithSuffix =
+        count === 1 ? baseName : baseName + '\u200b'.repeat(count - 1);
+
+      return {
+        cardId,
+        name: nameWithSuffix,
+        email: createBulkGuestsDto.email,
+        wish: createBulkGuestsDto.wish,
+        isJoining: createBulkGuestsDto.isJoining,
+      };
+    });
+
+    return this.guestModel.insertMany(guestsToCreate, {
+      ordered: false,
+    });
   }
 
   async findAll(cardId: string): Promise<Guest[]> {
